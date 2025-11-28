@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import sequelize from '../../../../lib/database';
 import User from '../../../../models/User';
 import { comparePassword, generateToken } from '../../../../lib/auth';
+import '../../../../lib/sync'; // Auto-sync database
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +21,21 @@ export async function POST(request: NextRequest) {
       where: { email },
     });
 
+    console.log('Login attempt for email:', email);
+    console.log('User found:', !!user);
+    
+    if (user) {
+      console.log('User object:', {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        hasPassword: !!user.password,
+        passwordLength: user.password?.length || 0,
+        passwordType: typeof user.password,
+        passwordValue: user.password ? 'exists' : 'missing'
+      });
+    }
+
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
@@ -27,6 +43,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if user has a password
+    if (!user.password) {
+      console.log('User password is missing');
+      return NextResponse.json(
+        { error: 'Account setup incomplete. Please contact support.' },
+        { status: 401 }
+      );
+    }
+
+    console.log('Attempting password comparison...');
     const isValidPassword = await comparePassword(password, user.password);
 
     if (!isValidPassword) {
@@ -44,6 +70,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         username: user.username,
         email: user.email,
+        profilePicture: user.profilePicture,
       },
       token,
     });

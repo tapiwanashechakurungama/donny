@@ -6,17 +6,19 @@ interface UserAttributes {
   username: string;
   email: string;
   password: string;
+  profilePicture?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 class User extends Model<UserAttributes> implements UserAttributes {
-  public id!: number;
-  public username!: string;
-  public email!: string;
-  public password!: string;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare id: number;
+  declare username: string;
+  declare email: string;
+  declare password: string;
+  declare profilePicture?: string;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 User.init(
@@ -48,6 +50,10 @@ User.init(
       validate: {
         len: [6, 255],
       },
+    },
+    profilePicture: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
     },
   },
   {

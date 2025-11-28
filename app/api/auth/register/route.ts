@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import sequelize from '../../../../lib/database';
 import User from '../../../../models/User';
 import { hashPassword, generateToken } from '../../../../lib/auth';
+import '../../../../lib/sync'; // Auto-sync database
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, email, password } = await request.json();
+    const { username, email, password, profilePicture } = await request.json();
 
     if (!username || !email || !password) {
       return NextResponse.json(
@@ -39,10 +40,35 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await hashPassword(password);
 
+    console.log('Creating user with data:', { 
+      username, 
+      email, 
+      passwordLength: password.length,
+      hashedPasswordLength: hashedPassword.length,
+      hasPassword: !!hashedPassword 
+    });
+
     const user = await User.create({
       username,
       email,
       password: hashedPassword,
+      profilePicture: profilePicture || null,
+    });
+
+    console.log('User created successfully:', { 
+      id: user.id, 
+      username: user.username, 
+      email: user.email,
+      hasPassword: !!user.password,
+      passwordLength: user.password?.length || 0
+    });
+
+    // Double-check the saved user
+    const savedUser = await User.findByPk(user.id);
+    console.log('Retrieved user from DB:', {
+      id: savedUser?.id,
+      hasPassword: !!savedUser?.password,
+      passwordLength: savedUser?.password?.length || 0
     });
 
     const token = generateToken(user.id, user.email);
@@ -53,6 +79,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         username: user.username,
         email: user.email,
+        profilePicture: user.profilePicture,
       },
       token,
     });
