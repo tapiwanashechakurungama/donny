@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import sequelize from '../../../../lib/database';
 import User from '../../../../models/User';
 import { hashPassword, generateToken } from '../../../../lib/auth';
+import { Op } from 'sequelize';
 import '../../../../lib/sync'; // Auto-sync database
 
 export async function POST(request: NextRequest) {
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     const existingUser = await User.findOne({
       where: {
-        [sequelize.Sequelize.Op.or]: [{ email }, { username }],
+        [Op.or]: [{ email }, { username }],
       },
     });
 
