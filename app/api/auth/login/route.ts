@@ -43,6 +43,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      return NextResponse.json(
+        { 
+          error: 'Please verify your email before logging in',
+          needsVerification: true,
+          email: user.email
+        },
+        { status: 401 }
+      );
+    }
+
     // Check if user has a password
     if (!user.password) {
       console.log('User password is missing');

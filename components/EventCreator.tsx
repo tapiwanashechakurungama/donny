@@ -29,6 +29,7 @@ export default function EventCreator({ onEventCreated }: { onEventCreated: () =>
     location: '',
     maxAttendees: '',
   });
+  const [eventPicture, setEventPicture] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -40,22 +41,36 @@ export default function EventCreator({ onEventCreated }: { onEventCreated: () =>
     });
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setEventPicture(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('date', formData.date);
+      formDataToSend.append('location', formData.location);
+      formDataToSend.append('createdBy', user!.id.toString());
+
+      if (formData.maxAttendees) {
+        formDataToSend.append('maxAttendees', formData.maxAttendees);
+      }
+
+      if (eventPicture) {
+        formDataToSend.append('eventPicture', eventPicture);
+      }
+
       const response = await fetch('/api/events', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          maxAttendees: formData.maxAttendees ? parseInt(formData.maxAttendees) : null,
-          createdBy: user?.id,
-        }),
+        body: formDataToSend,
       });
 
       const data = await response.json();
@@ -68,6 +83,7 @@ export default function EventCreator({ onEventCreated }: { onEventCreated: () =>
           location: '',
           maxAttendees: '',
         });
+        setEventPicture(null);
         setShowForm(false);
         onEventCreated();
       } else {
@@ -192,6 +208,30 @@ export default function EventCreator({ onEventCreated }: { onEventCreated: () =>
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Event location"
           />
+        </div>
+
+        <div>
+          <label htmlFor="eventPicture" className="block text-sm font-medium text-gray-700 mb-1">
+            Event Picture (Optional)
+          </label>
+          <div className="flex items-center space-x-4">
+            <input
+              type="file"
+              id="eventPicture"
+              name="eventPicture"
+              onChange={handleFileChange}
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            {eventPicture && (
+              <span className="text-sm text-gray-600">
+                {eventPicture.name}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            Upload an image for your event (JPEG, PNG, GIF, WebP - Max 5MB)
+          </p>
         </div>
 
         <div className="flex space-x-3">

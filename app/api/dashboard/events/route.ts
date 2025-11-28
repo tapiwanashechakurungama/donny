@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
         location: event.location,
         maxAttendees: event.maxAttendees,
         status: event.status,
+        eventPicture: event.eventPicture,
         creator: event.creator,
         acceptedCount,
         pendingCount,

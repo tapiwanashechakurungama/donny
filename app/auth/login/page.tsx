@@ -13,6 +13,9 @@ export default function LoginPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [resending, setResending] = useState(false);
   const router = useRouter();
 
   // Redirect if already authenticated
@@ -49,12 +52,43 @@ export default function LoginPage() {
         login(data.user, data.token);
         router.push('/');
       } else {
-        setError(data.error || 'Login failed');
+        if (data.needsVerification) {
+          setNeedsVerification(true);
+          setVerificationEmail(data.email);
+          setError(data.error);
+        } else {
+          setError(data.error);
+        }
       }
-    } catch (err) {
+    } catch (error) {
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    try {
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: verificationEmail }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setError('Verification email sent! Please check your inbox.');
+      } else {
+        setError(data.error);
+      }
+    } catch (error) {
+      setError('Failed to resend verification email.');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -111,8 +145,36 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
-              {error}
+            <div className={`border px-4 py-3 rounded-lg text-sm ${
+              needsVerification 
+                ? 'bg-yellow-50 border-yellow-200 text-yellow-600' 
+                : 'bg-red-50 border-red-200 text-red-600'
+            }`}>
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {needsVerification ? (
+                    <svg className="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                </div>
+                <div className="ml-3">
+                  <p>{error}</p>
+                  {needsVerification && (
+                    <button
+                      onClick={handleResendVerification}
+                      disabled={resending}
+                      className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-500 disabled:opacity-50"
+                    >
+                      {resending ? 'Sending...' : 'Resend verification email'}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 

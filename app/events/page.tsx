@@ -15,6 +15,7 @@ interface Event {
   maxAttendees?: number;
   createdBy: number;
   status: string;
+  eventPicture?: string;
   createdAt: string;
   creator: {
     id: number;

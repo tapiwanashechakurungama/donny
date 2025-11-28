@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import sequelize from '../../../../lib/database';
 import User from '../../../../models/User';
 import { hashPassword, generateToken } from '../../../../lib/auth';
+import { sendVerificationEmail } from '../../../../lib/email';
+import { generateVerificationToken, getTokenExpiry } from '../../../../lib/tokens';
 import { Op } from 'sequelize';
 import '../../../../lib/sync'; // Auto-sync database
 
@@ -40,49 +42,38 @@ export async function POST(request: NextRequest) {
     }
 
     const hashedPassword = await hashPassword(password);
-
-    console.log('Creating user with data:', { 
-      username, 
-      email, 
-      passwordLength: password.length,
-      hashedPasswordLength: hashedPassword.length,
-      hasPassword: !!hashedPassword 
-    });
+    const verificationToken = generateVerificationToken();
+    const verificationExpires = getTokenExpiry(24); // 24 hours
 
     const user = await User.create({
       username,
       email,
       password: hashedPassword,
       profilePicture: profilePicture || null,
+      isEmailVerified: false,
+      emailVerificationToken: verificationToken,
+      emailVerificationExpires: verificationExpires,
     });
 
-    console.log('User created successfully:', { 
-      id: user.id, 
-      username: user.username, 
-      email: user.email,
-      hasPassword: !!user.password,
-      passwordLength: user.password?.length || 0
-    });
+    // Send verification email
+    const emailSent = await sendVerificationEmail(email, username, verificationToken);
+    
+    if (!emailSent) {
+      console.error('Failed to send verification email to:', email);
+      // Still allow registration but note the email issue
+    }
 
-    // Double-check the saved user
-    const savedUser = await User.findByPk(user.id);
-    console.log('Retrieved user from DB:', {
-      id: savedUser?.id,
-      hasPassword: !!savedUser?.password,
-      passwordLength: savedUser?.password?.length || 0
-    });
-
-    const token = generateToken(user.id, user.email);
-
+    // Don't generate JWT token until email is verified
     return NextResponse.json({
-      message: 'User registered successfully',
+      message: 'Registration successful! Please check your email to verify your account.',
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
         profilePicture: user.profilePicture,
+        isEmailVerified: user.isEmailVerified,
       },
-      token,
+      // No token until email is verified
     });
   } catch (error) {
     console.error('Registration error:', error);

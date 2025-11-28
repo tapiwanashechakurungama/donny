@@ -2,11 +2,11 @@ import { Sequelize } from 'sequelize';
 import mysql2 from 'mysql2';
 
 const sequelize = new Sequelize(
-  "bsllvo3idsz7i88ixnas",
- "u4dq6ddsjahf6dew",
-  "Ev4HOtygXLATcuOD25zx",
+  "bn1cfdeunbmtwpft2rod",
+ "ukdmkxlhycbhvxkz",
+  "Rjlti3eC9wdTbFq0gFKT",
   {
-    host: "bsllvo3idsz7i88ixnas-mysql.services.clever-cloud.com",
+    host: "bn1cfdeunbmtwpft2rod-mysql.services.clever-cloud.com",
     dialect: 'mysql',
     dialectModule: mysql2,
     logging: process.env.NODE_ENV === 'development' ? console.log : false,

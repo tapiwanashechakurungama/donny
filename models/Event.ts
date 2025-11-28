@@ -11,6 +11,7 @@ interface EventAttributes {
   maxAttendees?: number;
   createdBy: number;
   status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+  eventPicture?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -24,6 +25,7 @@ class Event extends Model<EventAttributes> implements EventAttributes {
   declare maxAttendees?: number;
   declare createdBy: number;
   declare status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+  declare eventPicture?: string;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -79,6 +81,10 @@ Event.init(
       type: DataTypes.ENUM('upcoming', 'ongoing', 'completed', 'cancelled'),
       allowNull: false,
       defaultValue: 'upcoming',
+    },
+    eventPicture: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
     },
   },
   {
